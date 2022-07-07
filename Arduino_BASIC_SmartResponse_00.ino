@@ -42,13 +42,6 @@ void loop() {
   if (!autorun) {
     // get a line from the user
     char *input = host_readLine();
-    // special editor commands
-    if (input[0] == '?' && input[1] == 0) {
-      host_outputFreeMem(sysVARSTART - sysPROGEND);
-      host_showBuffer();
-      return;
-    }
-    // otherwise tokenize
     ret = tokenize((unsigned char*)input, tokenBuf, TOKEN_BUF_SIZE);
   }
   else {

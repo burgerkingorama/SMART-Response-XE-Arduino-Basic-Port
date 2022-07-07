@@ -149,7 +149,8 @@ PROGMEM const TokenTableEntry tokenTable[] = {
   {"SAVE", TKN_FMT_POST}, {"LOAD", TKN_FMT_POST}, {"PINREAD", 1}, {"ANALOGRD", 1},
   {"DIR", TKN_FMT_POST}, {"DELETE", TKN_FMT_POST},
   {"SIN", 1}, {"COS", 1}, {"ABS", 1}, {"LN", 1}, {"EXP", 1}, {"SQR", 1},
-  {"SGN", 1}, {"BYE", TKN_FMT_POST}, {"MSAVE", TKN_FMT_POST}, {"MLOAD", TKN_FMT_POST}, {"BATT", 0}, {"ATN", 1}
+  {"SGN", 1}, {"BYE", TKN_FMT_POST}, {"MSAVE", TKN_FMT_POST}, {"MLOAD", TKN_FMT_POST}, {"BATT", 0}, {"ATN", 1}, {"MEM", 0},
+  {"?", TKN_FMT_POST} // print alias
 };
 
 
@@ -1273,6 +1274,10 @@ int parseBatt() {
   return TYPE_NUMBER;
 }
 
+int parseMem() {
+
+}
+
 int parse_INKEY() {
   getNextToken();
   if (executeMode && !stackPushNum((float)host_getKey())) return ERROR_OUT_OF_MEMORY;
@@ -1317,6 +1322,8 @@ int parsePrimary() {
       return parse_RND();
     case TOKEN_BATT:
       return parseBatt();
+    case TOKEN_MEM:
+      return parseMem();
     case TOKEN_INKEY:
       return parse_INKEY();
 
@@ -1868,8 +1875,9 @@ int parseSimpleCmd() {
       case TOKEN_BYE:
         SRXESleep();
         break;
-      case TOKEN_BATT:
-        parseBatt();
+      case TOKEN_MEM:
+        host_outputFreeMem(sysVARSTART - sysPROGEND);
+        host_showBuffer();
         break;
       case TOKEN_DIR:
 #if EXTERNAL_EEPROM
@@ -1911,7 +1919,10 @@ int parseStmts()
       sysSTACKEND = sysSTACKSTART = sysPROGEND;	// clear calculator stack
     int needCmdSep = 1;
     switch (curToken) {
-      case TOKEN_PRINT: ret = parse_PRINT(); break;
+      case TOKEN_PRINT:
+      case TOKEN_PRINT_ALIAS:
+        ret = parse_PRINT();
+        break;
       case TOKEN_LET: getNextToken(); ret = parseAssignment(false); break;
       case TOKEN_IDENT: ret = parseAssignment(false); break;
       case TOKEN_INPUT: getNextToken(); ret = parseAssignment(true); break;
@@ -1951,6 +1962,7 @@ int parseStmts()
       case TOKEN_CLS:
       case TOKEN_DIR:
       case TOKEN_BYE:
+      case TOKEN_MEM:
         ret = parseSimpleCmd();
         break;
 
