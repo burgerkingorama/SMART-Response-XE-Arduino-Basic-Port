@@ -105,7 +105,7 @@ byte SymKeys[] =       {'!', '2', '3', '$', '%', '6', '\'', '\"', '(', ')',
 //
 // Power on the LCD
 //
-const char powerup[] PROGMEM = {
+const unsigned char powerup[] PROGMEM = {
   1, 0x01, // soft reset
   99, 120, // 120ms delay
   1, 0x11,  // sleep out
@@ -426,7 +426,7 @@ void SRXEWriteDataBlock(unsigned char *ucBuf, int iLen)
 void SRXEPowerUp(void)
 {
   uint8_t ucTemp[4];
-  const char *pList = powerup;
+  const unsigned char *pList = powerup;
   uint8_t val, count, len = 1;
 
   while (len != 0)
