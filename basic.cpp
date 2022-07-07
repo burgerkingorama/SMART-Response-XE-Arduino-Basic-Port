@@ -150,7 +150,6 @@ PROGMEM const TokenTableEntry tokenTable[] = {
   {"DIR", TKN_FMT_POST}, {"DELETE", TKN_FMT_POST},
   {"SIN", 1}, {"COS", 1}, {"ABS", 1}, {"LN", 1}, {"EXP", 1}, {"SQR", 1},
   {"SGN", 1}, {"BYE", TKN_FMT_POST}, {"MSAVE", TKN_FMT_POST}, {"MLOAD", TKN_FMT_POST}, {"BATT", 0}, {"ATN", 1}, {"MEM", 0},
-  {"?", TKN_FMT_POST} // print alias
 };
 
 
@@ -873,6 +872,7 @@ int nextToken()
         return 0;
       }
     }
+
     // no matching keyword - this must be an identifier
     // $ is only allowed at the end
     char *dollarPos = strchr(identStr, '$');
@@ -906,12 +906,22 @@ int nextToken()
     tokenOutLeft--;
     return 0;
   }
+
+  // handle PRINT abbr ?
+  if((char)*tokenIn == '?') {
+    if (tokenOutLeft < 1) return ERROR_LEXER_TOO_LONG;
+
+    *tokenOut++ = TOKEN_PRINT;
+    tokenOutLeft--;
+    tokenIn += 1;
+    return 0;
+  }
+
   // handle non-alpha tokens e.g. =
   for (int i = LAST_NON_ALPHA_TOKEN; i >= FIRST_NON_ALPHA_TOKEN; i--) {
     // do this "backwards" so we match >= correctly, not as > then =
     int len = strlen((char *)pgm_read_word(&tokenTable[i].token));
     if (strncmp((char *)pgm_read_word(&tokenTable[i].token), (char*)tokenIn, len) == 0) {
-      if (tokenOutLeft <= 1) return ERROR_LEXER_TOO_LONG;
       *tokenOut++ = i;
       tokenOutLeft--;
       tokenIn += len;
@@ -1919,10 +1929,7 @@ int parseStmts()
       sysSTACKEND = sysSTACKSTART = sysPROGEND;	// clear calculator stack
     int needCmdSep = 1;
     switch (curToken) {
-      case TOKEN_PRINT:
-      case TOKEN_PRINT_ALIAS:
-        ret = parse_PRINT();
-        break;
+      case TOKEN_PRINT: ret = parse_PRINT(); break;
       case TOKEN_LET: getNextToken(); ret = parseAssignment(false); break;
       case TOKEN_IDENT: ret = parseAssignment(false); break;
       case TOKEN_INPUT: getNextToken(); ret = parseAssignment(true); break;
