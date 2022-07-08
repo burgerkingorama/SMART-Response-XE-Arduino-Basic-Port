@@ -150,6 +150,7 @@ PROGMEM const TokenTableEntry tokenTable[] = {
   {"DIR", TKN_FMT_POST}, {"DELETE", TKN_FMT_POST},
   {"SIN", 1}, {"COS", 1}, {"ABS", 1}, {"LN", 1}, {"EXP", 1}, {"SQR", 1},
   {"SGN", 1}, {"BYE", TKN_FMT_POST}, {"MSAVE", TKN_FMT_POST}, {"MLOAD", TKN_FMT_POST}, {"BATT", 0}, {"ATN", 1}, {"MEM", 0},
+  {"VLINE", TKN_FMT_POST}, {"HLINE", TKN_FMT_POST}, {"RECT", TKN_FMT_POST},
 };
 
 
@@ -1629,6 +1630,83 @@ int parseTwoIntCmd() {
   return 0;
 }
 
+int parseNIntCmd(int noOfIntParams) {
+  int op = curToken;
+
+  int val;
+  for(int i=0; i<(noOfIntParams-1);++i) {
+    getNextToken();
+    val = expectNumber();
+    if (val) return val;	// error
+    if (curToken != TOKEN_COMMA)
+      return ERROR_UNEXPECTED_TOKEN;
+  }
+
+  getNextToken();
+  val = expectNumber();
+  if (val) return val;	// error
+
+  return 0;
+}
+
+int parseGraphicStmts()
+{
+  int ret = 0;
+
+  switch(curToken) {
+      case TOKEN_HLINE: { // e.g. HLINE x,y,len,color, thickness 
+        ret = parseNIntCmd(5);
+        if(executeMode && (ret == 0)) {
+          int x = (int)stackPopNum();
+          int y = (int)stackPopNum();
+          int len = (int)stackPopNum();
+          int col = (int)stackPopNum();
+          int thi = (int)stackPopNum();
+
+          SRXEHorizontalLine(x, y, len, col, thi);
+        }
+      }
+      break;
+
+      case TOKEN_VLINE: {
+        ret = parseNIntCmd(4);
+        if(executeMode && (ret == 0)) {
+          int x = (int)stackPopNum();
+          int y = (int)stackPopNum();
+          int len = (int)stackPopNum();
+          int col = (int)stackPopNum();
+
+          SRXEVerticalLine(x, y, len, col);
+        }
+      } // e.g. VLINE x,y,len,color
+      break;
+
+      // RECT int x, int y, int cx, int cy, byte color, byte bFilled)
+      case TOKEN_RECT: {
+        ret = parseNIntCmd(6);
+        if(executeMode && (ret == 0)) {
+          int x = (int)stackPopNum();
+          int y = (int)stackPopNum();
+          int cx = (int)stackPopNum();
+          int cy = (int)stackPopNum();
+          int col = (int)stackPopNum();
+          int fil = (int)stackPopNum();
+
+          SRXERectangle(x,y,cx,cy,col,fil);
+        }
+      } // e.g. VLINE x,y,len,color
+      break;
+  }
+
+  return ret;
+}
+
+
+//      VLINE x,y,len,color
+//      RECT int x, int y, int cx, int cy, byte color, byte bFilled
+      
+
+
 // this handles both LET a$="hello" and INPUT a$ type assignments
 int parseAssignment(bool inputStmt) {
   char ident[MAX_IDENT_LEN + 1];
@@ -1971,6 +2049,12 @@ int parseStmts()
       case TOKEN_BYE:
       case TOKEN_MEM:
         ret = parseSimpleCmd();
+        break;
+
+      case TOKEN_HLINE:
+      case TOKEN_VLINE:
+      case TOKEN_RECT:
+        ret = parseGraphicStmts();
         break;
 
       default:

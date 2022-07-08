@@ -81,8 +81,13 @@
 #define TOKEN_ATN 77
 #define TOKEN_MEM 78
 
+// Graphic
+#define TOKEN_VLINE 79
+#define TOKEN_HLINE 80
+#define TOKEN_RECT  81
+
 #define FIRST_IDENT_TOKEN 23
-#define LAST_IDENT_TOKEN 78
+#define LAST_IDENT_TOKEN 81
 
 #define FIRST_NON_ALPHA_TOKEN    8
 #define LAST_NON_ALPHA_TOKEN    22
