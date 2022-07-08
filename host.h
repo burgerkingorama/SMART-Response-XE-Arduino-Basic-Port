@@ -1,13 +1,13 @@
 #include <stdint.h>
 
-#define SCREEN_WIDTH        32
-#define SCREEN_HEIGHT       8
+#define SCREEN_WIDTH 32
+#define SCREEN_HEIGHT 8
 
-#define EXTERNAL_EEPROM         0
-#define EXTERNAL_EEPROM_ADDR    0x50    // I2C address (7 bits)
-#define EXTERNAL_EEPROM_SIZE    32768   // only <=32k tested (64k might work?)
+#define EXTERNAL_EEPROM 0
+#define EXTERNAL_EEPROM_ADDR 0x50   // I2C address (7 bits)
+#define EXTERNAL_EEPROM_SIZE 32768  // only <=32k tested (64k might work?)
 
-#define MAGIC_AUTORUN_NUMBER    0xFC
+#define MAGIC_AUTORUN_NUMBER 0xFC
 
 void host_init();
 void host_sleep(long ms);

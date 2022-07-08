@@ -1,12 +1,16 @@
 #include "host.h"
-#include "basic.h"
-#include <avr/pgmspace.h>
-#include "SmartResponseXEa.h"
-#include <EEPROM.h>
 
-#define PS2_DELETE 2 // Since no PS2 keyboard, define delete for SMART device (pad left)
-#define PS2_ENTER 0xd // This is the SMART delete key but it is the natural enter key
-#define PS2_ESC 0x1b // Square root key
+#include <EEPROM.h>
+#include <avr/pgmspace.h>
+
+#include "SmartResponseXEa.h"
+#include "basic.h"
+
+#define PS2_DELETE \
+  2  // Since no PS2 keyboard, define delete for SMART device (pad left)
+#define PS2_ENTER \
+  0xd  // This is the SMART delete key but it is the natural enter key
+#define PS2_ESC 0x1b  // Square root key
 
 int timer1_counter;
 
@@ -21,19 +25,19 @@ char inkeyLast = 0;
 const char bytesFreeStr[] PROGMEM = "bytes free";
 
 void initTimer() {
-  noInterrupts();           // disable all interrupts
+  noInterrupts();  // disable all interrupts
   TCCR1A = 0;
   TCCR1B = 0;
-  timer1_counter = 34286;   // preload timer 65536-16MHz/256/2Hz
-  TCNT1 = timer1_counter;   // preload timer
-  TCCR1B |= (1 << CS12);    // 256 prescaler
-  TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
-  interrupts();             // enable all interrupts
+  timer1_counter = 34286;  // preload timer 65536-16MHz/256/2Hz
+  TCNT1 = timer1_counter;  // preload timer
+  TCCR1B |= (1 << CS12);   // 256 prescaler
+  TIMSK1 |= (1 << TOIE1);  // enable timer overflow interrupt
+  interrupts();            // enable all interrupts
 }
 
-ISR(TIMER1_OVF_vect)        // interrupt service routine
+ISR(TIMER1_OVF_vect)  // interrupt service routine
 {
-  TCNT1 = timer1_counter;   // preload timer
+  TCNT1 = timer1_counter;  // preload timer
   flash = !flash;
   redraw = 1;
 }
@@ -43,25 +47,17 @@ void host_init() {
   initTimer();
 }
 
-void host_sleep(long ms) {
-  delay(ms);
-}
+void host_sleep(long ms) { delay(ms); }
 
 void host_digitalWrite(int pin, int state) {
   digitalWrite(pin, state ? HIGH : LOW);
 }
 
-int host_digitalRead(int pin) {
-  return digitalRead(pin);
-}
+int host_digitalRead(int pin) { return digitalRead(pin); }
 
-int host_analogRead(int pin) {
-  return analogRead(pin);
-}
+int host_analogRead(int pin) { return analogRead(pin); }
 
-void host_pinMode(int pin, int mode) {
-  pinMode(pin, mode);
-}
+void host_pinMode(int pin, int mode) { pinMode(pin, mode); }
 
 void host_cls() {
   memset(screenBuffer, 32, SCREEN_WIDTH * SCREEN_HEIGHT);
@@ -96,7 +92,8 @@ void host_showBuffer() {
 }
 
 void scrollBuffer() {
-  memcpy(screenBuffer, screenBuffer + SCREEN_WIDTH, SCREEN_WIDTH * (SCREEN_HEIGHT - 1));
+  memcpy(screenBuffer, screenBuffer + SCREEN_WIDTH,
+         SCREEN_WIDTH * (SCREEN_HEIGHT - 1));
   memset(screenBuffer + SCREEN_WIDTH * (SCREEN_HEIGHT - 1), 32, SCREEN_WIDTH);
   memset(lineDirty, 1, SCREEN_HEIGHT);
   curY--;
@@ -144,8 +141,7 @@ int host_outputInt(long num) {
     c++;
     xx *= 10;
     i /= 10;
-  }
-  while (i);
+  } while (i);
 
   for (int i = 0; i < c; i++) {
     xx /= 10;
@@ -161,12 +157,10 @@ char *host_floatToStr(float f, char *buf) {
   if (f == 0.0f) {
     buf[0] = '0';
     buf[1] = 0;
-  }
-  else if (a < 0.0001 || a > 1000000) {
+  } else if (a < 0.0001 || a > 1000000) {
     // this will output -1.123456E99 = 13 characters max including trailing nul
     dtostre(f, buf, 6, 0);
-  }
-  else {
+  } else {
     int decPos = 7 - (int)(floor(log10(a)) + 1.0f);
     dtostrf(f, 1, decPos, buf);
     if (decPos) {
@@ -191,8 +185,7 @@ void host_outputFloat(float f) {
 void host_newLine() {
   curX = 0;
   curY++;
-  if (curY == SCREEN_HEIGHT)
-    scrollBuffer();
+  if (curY == SCREEN_HEIGHT) scrollBuffer();
   memset(screenBuffer + SCREEN_WIDTH * (curY), 32, SCREEN_WIDTH);
   lineDirty[curY] = 1;
 }
@@ -200,8 +193,10 @@ void host_newLine() {
 char *host_readLine() {
   inputMode = 1;
 
-  if (curX == 0) memset(screenBuffer + SCREEN_WIDTH * (curY), 32, SCREEN_WIDTH);
-  else host_newLine();
+  if (curX == 0)
+    memset(screenBuffer + SCREEN_WIDTH * (curY), 32, SCREEN_WIDTH);
+  else
+    host_newLine();
 
   int startPos = curY * SCREEN_WIDTH + curX;
   int pos = startPos;
@@ -225,9 +220,7 @@ char *host_readLine() {
           startPos -= SCREEN_WIDTH;
           pos -= SCREEN_WIDTH;
           scrollBuffer();
-        }
-        else
-        {
+        } else {
           screenBuffer[--pos] = 0;
           curX = pos % SCREEN_WIDTH;
           curY = pos / SCREEN_WIDTH;
@@ -235,8 +228,7 @@ char *host_readLine() {
       }
       redraw = 1;
     }
-    if (redraw)
-      host_showBuffer();
+    if (redraw) host_showBuffer();
   }
   screenBuffer[pos] = 0;
   inputMode = 0;
@@ -256,14 +248,12 @@ bool host_ESCPressed() {
   while (inkeyChar = SRXEGetKey()) {
     if (inkeyChar != 0) inkeyLast = inkeyChar;
     // read the next key
-    if (inkeyChar == PS2_ESC)
-      return true;
+    if (inkeyChar == PS2_ESC) return true;
   }
   return false;
 }
 
-void host_outputFreeMem(unsigned int val)
-{
+void host_outputFreeMem(unsigned int val) {
   host_newLine();
   host_outputInt(val);
   host_outputChar(' ');
@@ -274,15 +264,13 @@ void host_saveProgram(bool autoexec) {
   EEPROM.write(0, autoexec ? MAGIC_AUTORUN_NUMBER : 0x00);
   EEPROM.write(1, sysPROGEND & 0xFF);
   EEPROM.write(2, (sysPROGEND >> 8) & 0xFF);
-  for (int i = 0; i < sysPROGEND; i++)
-    EEPROM.write(3 + i, mem[i]);
+  for (int i = 0; i < sysPROGEND; i++) EEPROM.write(3 + i, mem[i]);
 }
 
 void host_loadProgram() {
   //  skip the autorun byte
   sysPROGEND = EEPROM.read(1) | (EEPROM.read(2) << 8);
-  for (int i = 0; i < sysPROGEND; i++)
-    mem[i] = EEPROM.read(i + 3);
+  for (int i = 0; i < sysPROGEND; i++) mem[i] = EEPROM.read(i + 3);
 }
 
 // Clear a 12k block to memory to write to. Each mem block holds
@@ -295,9 +283,9 @@ void clearMem(short int memNum) {
 }
 
 void host_saveMem(short int mNum) {
-  uint8_t memSend[256]; // Array holding the 256 byte packet to save
+  uint8_t memSend[256];  // Array holding the 256 byte packet to save
   int retn;
-  uint32_t  mempos = mNum * 12288ul; // Start address of selected memory slot
+  uint32_t mempos = mNum * 12288ul;  // Start address of selected memory slot
   clearMem(mNum);
 
   // Save the 32, 256 byte packets
@@ -316,12 +304,12 @@ void host_saveMem(short int mNum) {
 }
 
 void host_loadMem(short int mNum) {
-
-  uint32_t  mempos = mNum * 12288ul; // Start address of selected memory slot
-  uint16_t dig1 = SRXEFlashReadByte(mempos); // Solves problem of misread on initial startup
+  uint32_t mempos = mNum * 12288ul;  // Start address of selected memory slot
+  uint16_t dig1 = SRXEFlashReadByte(
+      mempos);  // Solves problem of misread on initial startup
   dig1 = SRXEFlashReadByte(mempos + 8192);
   uint16_t dig2 = SRXEFlashReadByte(mempos + 8193);
-  sysPROGEND = dig1 | (dig2 << 8); // Retrieve sysPROGEND
+  sysPROGEND = dig1 | (dig2 << 8);  // Retrieve sysPROGEND
   for (int i = 0; i < sysPROGEND; i++) {
     mem[i] = SRXEFlashReadByte(mempos + i);
   }

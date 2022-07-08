@@ -1,10 +1,11 @@
+#include <Arduino.h>
+#include <avr/pgmspace.h>
+#include <avr/sleep.h>
+
+#include "SPI.h"
+#include "SmartResponseXEa.h"
 #include "basic.h"
 #include "host.h"
-#include "SPI.h"
-#include <avr/sleep.h>
-#include <avr/pgmspace.h>
-#include "SmartResponseXEa.h"
-#include <Arduino.h>
 
 // Define in host.h if using an external EEPROM e.g. 24LC256
 // Should be connected to the I2C pins
@@ -13,18 +14,18 @@
 
 // BASIC
 unsigned char mem[MEMORY_SIZE];
-#define TOKEN_BUF_SIZE    77
+#define TOKEN_BUF_SIZE 77
 unsigned char tokenBuf[TOKEN_BUF_SIZE];
 
 const char welcomeStr[] PROGMEM = "Arduino BASIC";
 char autorun = 0;
 
 void setup() {
-  pinMode(INT2, INPUT_PULLUP); // Power Button
+  pinMode(INT2, INPUT_PULLUP);  // Power Button
 
-  TRXPR = 1 << SLPTR; // send transceiver to sleep
+  TRXPR = 1 << SLPTR;  // send transceiver to sleep
   initADC();
-  SRXEInit(0xe7, 0xd6, 0xa2); // initialize and clear display CS, D/C, RESET
+  SRXEInit(0xe7, 0xd6, 0xa2);  // initialize and clear display CS, D/C, RESET
   SRXEFill(0);
 
   reset();
@@ -42,9 +43,8 @@ void loop() {
   if (!autorun) {
     // get a line from the user
     char *input = host_readLine();
-    ret = tokenize((unsigned char*)input, tokenBuf, TOKEN_BUF_SIZE);
-  }
-  else {
+    ret = tokenize((unsigned char *)input, tokenBuf, TOKEN_BUF_SIZE);
+  } else {
     // host_loadProgram();
     // tokenBuf[0] = TOKEN_RUN;
     // tokenBuf[1] = 0;
@@ -67,11 +67,11 @@ void loop() {
 
 // Setup the ADC
 void initADC() {
-  ADMUX = 0xC0; // Int ref 1.6V
-  ADCSRA = 0x87; // Enable ADC
-  ADCSRB = 0x00; // MUX5= 0, freerun
-  ADCSRC = 0x54; // Default value
-  ADCSRA = 0x97; // Enable ADC
-  //delay(5);
-  ADCSRA |= (1 << ADSC); // start conversion
+  ADMUX = 0xC0;   // Int ref 1.6V
+  ADCSRA = 0x87;  // Enable ADC
+  ADCSRB = 0x00;  // MUX5= 0, freerun
+  ADCSRC = 0x54;  // Default value
+  ADCSRA = 0x97;  // Enable ADC
+  // delay(5);
+  ADCSRA |= (1 << ADSC);  // start conversion
 }
