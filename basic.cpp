@@ -2081,6 +2081,7 @@ int parseStmts() {
       case TOKEN_HLINE:
       case TOKEN_VLINE:
       case TOKEN_RECT:
+      case TOKEN_FILL:
         ret = parseGraphicStmts();
         break;
 
