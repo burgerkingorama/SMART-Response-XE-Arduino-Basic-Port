@@ -208,6 +208,7 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"VLINE", TKN_FMT_POST},
     {"HLINE", TKN_FMT_POST},
     {"RECT", TKN_FMT_POST},
+    {"FILL", TKN_FMT_POST},
 };
 
 /* **************************************************************************
@@ -940,11 +941,21 @@ int nextToken() {
     return 0;
   }
 
-  // handle PRINT abbr ?
+  // c charT abbr ?
   if ((char)*tokenIn == '?') {
     if (tokenOutLeft < 1) return ERROR_LEXER_TOO_LONG;
 
     *tokenOut++ = TOKEN_PRINT;
+    tokenOutLeft--;
+    tokenIn += 1;
+    return 0;
+  }
+
+  // handle REM abbr '
+  if ((char)*tokenIn == '\'') {
+    if (tokenOutLeft < 1) return ERROR_LEXER_TOO_LONG;
+
+    *tokenOut++ = TOKEN_REM;
     tokenOutLeft--;
     tokenIn += 1;
     return 0;
@@ -1632,22 +1643,20 @@ int parseTwoIntCmd() {
   return 0;
 }
 
+// Parse variable lenght of int parameters
+// e.g. n=5:  1,2,3,4,5
 int parseNIntCmd(int noOfIntParams) {
   int op = curToken;
 
-  int val;
   for (int i = 0; i < (noOfIntParams - 1); ++i) {
     getNextToken();
-    val = expectNumber();
+    int val = expectNumber();
     if (val) return val;  // error
     if (curToken != TOKEN_COMMA) return ERROR_UNEXPECTED_TOKEN;
   }
 
-  getNextToken();
-  val = expectNumber();
-  if (val) return val;  // error
-
-  return 0;
+  getNextToken();  // last number without comma afterwards
+  return expectNumber();
 }
 
 int parseGraphicStmts() {
@@ -1677,8 +1686,7 @@ int parseGraphicStmts() {
 
         SRXEVerticalLine(x, y, len, col);
       }
-    }  // e.g. VLINE x,y,len,color
-    break;
+    } break;
 
     // RECT int x, int y, int cx, int cy, byte color, byte bFilled)
     case TOKEN_RECT: {
@@ -1693,8 +1701,18 @@ int parseGraphicStmts() {
 
         SRXERectangle(x, y, cx, cy, col, fil);
       }
-    }  // e.g. VLINE x,y,len,color
-    break;
+    } break;
+
+    // FILL int pattern (0-255)
+    // e.g. FILL 128
+    case TOKEN_FILL: {
+      ret = parseNIntCmd(1);
+      if (executeMode && (ret == 0)) {
+        int pat = (int)stackPopNum();
+
+        SRXEFill(pat);
+      }
+    } break;
   }
 
   return ret;
