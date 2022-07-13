@@ -700,7 +700,7 @@ void SRXERectangle(int x, int y, int cx, int cy, byte color, byte bFilled)
 // Draw a string of normal (8x8), small (6x8) or large (16x24) characters
 // At the given col+row
 //
-int SRXEWriteString(int x, int y, char *szMsg, int iSize, int iFGColor, int iBGColor)
+int SRXEWriteString(int x, int y, const char *szMsg, int iSize, int iFGColor, int iBGColor)
 {
   int i, j, iLen;
   unsigned char ucTemp[8], *s;

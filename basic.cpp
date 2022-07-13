@@ -209,6 +209,8 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"HLINE", TKN_FMT_POST},
     {"RECT", TKN_FMT_POST},
     {"FILL", TKN_FMT_POST},
+    {"TEST", 0},
+
 };
 
 /* **************************************************************************
@@ -1313,7 +1315,64 @@ int parseBatt() {
   return TYPE_NUMBER;
 }
 
-int parseMem() {}
+#define TEXT_WIDTH (LCD_WIDTH / 3)
+#define TEXT_HEIGHT (LCD_HEIGHT)
+
+int parseTestDisplay() {
+  // Draw display background
+  SRXEFill(0);
+  // Next, you can draw some text or rectangles. The color can be 0-3 (0=off,
+  // 3=fully on)
+  SRXEWriteString(
+      60, 2, "Hello World!", FONT_LARGE, 3,
+      0);  // (int x, int y, char *szMsg, int iSize, int iFGColor, int iBGColor)
+  SRXEWriteString(60, 22, "Battery:", FONT_LARGE, 3, 0);
+  SRXEWriteString(60, 42, "Uptime :", FONT_LARGE, 3, 0);
+  SRXEWriteString(60, 62, "Key    :", FONT_LARGE, 3, 0);
+
+  // Draw a rectanle on each side of the screen
+  SRXERectangle(
+      0, 0, 17, 135, 0x1,
+      0x1);  // (int x, int y, int cx, int cy, byte color, byte bFilled)
+  SRXERectangle(110, 0, 17, 135, 0x1, 0x1);
+  SRXEVerticalLine(17, 0, 135, 3);
+  SRXEVerticalLine(110, 0, 135, 3);
+
+  // Draw arrows pointing to the soft keys
+  SRXEWriteString(0, 2, "< A", FONT_LARGE, 3, 1);
+  SRXEWriteString(0, 32, "< B", FONT_LARGE, 3, 1);
+  SRXEWriteString(0, 62, "< C", FONT_LARGE, 3, 1);
+  SRXEWriteString(0, 92, "< D", FONT_LARGE, 3, 1);
+  SRXEWriteString(0, 122, "< E", FONT_LARGE, 3, 1);
+
+  int charnum = 3;
+  int rightColX = TEXT_WIDTH - (16 * charnum);
+  SRXEWriteString(rightColX, 2, "F >", FONT_LARGE, 3, 1);
+  SRXEWriteString(rightColX, 32, "G >", FONT_LARGE, 3, 1);
+  SRXEWriteString(rightColX, 62, "H >", FONT_LARGE, 3, 1);
+  SRXEWriteString(rightColX, 92, "I >", FONT_LARGE, 3, 1);
+  SRXEWriteString(rightColX, 122, "J >", FONT_LARGE, 3, 1);
+
+  // Draw some rectangles with various fill and color
+  SRXERectangle(25, 115, 15, 15, 0x3, 0x0);
+  SRXERectangle(45, 115, 15, 15, 0x1, 0x1);
+  SRXERectangle(70, 115, 15, 15, 0x2, 0x1);
+  SRXERectangle(90, 115, 15, 15, 0x3, 0x1);
+
+  SRXEWriteString(60, 82, "Small 0123456789", FONT_SMALL, 3, 0);
+  SRXEWriteString(168, 82, "Normal 0123456789", FONT_NORMAL, 3, 0);
+  SRXEWriteString(60, 92, "Medium 0123456789", FONT_MEDIUM, 3, 0);
+
+  // Draw a vertical and horizontal line
+  SRXEVerticalLine(
+      TEXT_WIDTH / 2, 107, TEXT_HEIGHT - 84,
+      0x3);  // int x, int y, int height, byte color // color options: 0x0 - 0x3
+  SRXEHorizontalLine(
+      17, 107, 93, 0x3,
+      2);  // (int x, int y, int length, byte color, int thickness)
+
+  return 0;
+}
 
 int parse_INKEY() {
   getNextToken();
@@ -1358,8 +1417,6 @@ int parsePrimary() {
       return parse_RND();
     case TOKEN_BATT:
       return parseBatt();
-    case TOKEN_MEM:
-      return parseMem();
     case TOKEN_INKEY:
       return parse_INKEY();
 
@@ -1965,6 +2022,9 @@ int parseSimpleCmd() {
         host_outputFreeMem(sysVARSTART - sysPROGEND);
         host_showBuffer();
         break;
+      case TOKEN_TEST:
+        parseTestDisplay();
+        break;
       case TOKEN_DIR:
 #if EXTERNAL_EEPROM
         host_directoryExtEEPROM();
@@ -2075,6 +2135,7 @@ int parseStmts() {
       case TOKEN_DIR:
       case TOKEN_BYE:
       case TOKEN_MEM:
+      case TOKEN_TEST:
         ret = parseSimpleCmd();
         break;
 
