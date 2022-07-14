@@ -646,7 +646,7 @@ void SRXEHorizontalLine(int x, int y, int length, byte color, int thickness) {
 
 
 void SRXEVerticalLine(int x, int y, int height, byte color) {
-  byte bTemp[128];
+  byte bTemp[LCD_HEIGHT];
 
   SRXESetPosition(x * 3, y, 1, height );
   memset(bTemp, bColorToByte[color], height);
@@ -661,7 +661,7 @@ void SRXEVerticalLine(int x, int y, int height, byte color) {
 //
 void SRXERectangle(int x, int y, int cx, int cy, byte color, byte bFilled)
 {
-  byte bTemp[128];
+  byte bTemp[LCD_HEIGHT];
 
   if (x < 0 || x > 127 || y < 0 || y > 135) return;
   if (x + cx > 127 || y + cy > 135) return;
